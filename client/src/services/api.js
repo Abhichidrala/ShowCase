@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://showcase-pwyf.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -107,7 +107,7 @@ const dashboard = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   updateSettings: (settings) => api.put('/dashboard/settings', settings),
-  
+
   // Projects
   getProjects: () => api.get('/dashboard/projects'),
   createProject: (formData) => api.post('/dashboard/projects', formData, {
