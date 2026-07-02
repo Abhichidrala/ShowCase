@@ -1,0 +1,396 @@
+<%- include('../partials/head') %>
+
+<section class="page-header">
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div>
+        <span class="section-tag reveal">About</span>
+        <h1 class="page-title reveal">About Me</h1>
+        <p class="page-subtitle reveal">My story, skills, and journey</p>
+      </div>
+      
+      <!-- Connection Trigger -->
+      <div class="reveal" style="display:flex; align-items:center; gap:16px;">
+        <span style="font-size:0.9rem; color:var(--text-secondary);"><strong style="color:var(--accent);"><%= connectionsCount %></strong> Connections</span>
+        
+        <% if (user && user.id !== portfolioUser.id) { %>
+          <div id="connect-wrapper">
+            <% if (connectionStatus === 'accepted') { %>
+              <span class="btn btn-outline" style="cursor:default; border-color:#1dd1a1; color:#1dd1a1;">✓ Connected</span>
+            <% } else if (connectionStatus === 'pending') { %>
+              <span class="btn btn-outline" style="cursor:default; border-color:#ff9f43; color:#ff9f43;">✉ Request Pending</span>
+            <% } else { %>
+              <button id="connectBtn" class="btn btn-primary" data-username="<%= portfolioUser.username %>">Connect</button>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bio Section -->
+<section class="section">
+  <div class="container">
+    <div class="about-intro reveal">
+      <div class="about-avatar">
+        <% if (settings.avatar_url) { %>
+        <img src="<%= settings.avatar_url %>" alt="Profile photo">
+        <% } else { %>
+        <div class="avatar-placeholder">
+          <span><%= (settings.hero_title || 'A').charAt(0) %></span>
+        </div>
+        <% } %>
+      </div>
+      <div class="about-bio">
+        <h2>Who I Am</h2>
+        <p><%= settings.about_bio || '' %></p>
+        <div class="about-actions">
+          <% if (settings.resume_url) { %>
+          <a href="<%= settings.resume_url %>" target="_blank" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Resume
+          </a>
+          <% } %>
+          <% if (settings.email) { %>
+          <a href="mailto:<%= settings.email %>" class="btn btn-outline">Get In Touch</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Experience Timeline -->
+<% if (sectionVisibility.experience !== false && experience.length > 0) { %>
+<section class="section section--dark" id="experience">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Career</span>
+      <h2 class="section-title">Experience</h2>
+      <p class="section-subtitle">My professional journey</p>
+    </div>
+    <div class="timeline">
+      <% experience.forEach((exp, index) => { %>
+      <div class="timeline-item reveal" style="--delay: <%= index * 0.15 %>s">
+        <div class="timeline-marker">
+          <% if (exp.is_current) { %>
+          <span class="marker-pulse"></span>
+          <% } %>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-role"><%= exp.role %></h3>
+            <span class="timeline-date">
+              <%= exp.start_date %>
+              <% if (exp.is_current) { %>
+              — Present
+              <% } else if (exp.end_date) { %>
+              — <%= exp.end_date %>
+              <% } %>
+            </span>
+          </div>
+          <div class="timeline-company">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <%= exp.company %>
+            <% if (exp.location) { %>
+            <span class="timeline-location">· <%= exp.location %></span>
+            <% } %>
+          </div>
+          <p class="timeline-desc"><%= exp.description %></p>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- Education Timeline -->
+<% if (sectionVisibility.education !== false && typeof education !== 'undefined' && education.length > 0) { %>
+<section class="section" id="education">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Academics</span>
+      <h2 class="section-title">Education</h2>
+      <p class="section-subtitle">Degrees and academic accomplishments</p>
+    </div>
+    <div class="timeline">
+      <% education.forEach((edu, index) => { %>
+      <div class="timeline-item reveal" style="--delay: <%= index * 0.15 %>s">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
+          <div class="timeline-header">
+            <h3 class="timeline-role"><%= edu.institution %></h3>
+            <span class="timeline-date">
+              <%= edu.start_date %> to <%= edu.end_date || 'Present' %>
+            </span>
+          </div>
+          <div class="timeline-company">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+            <%= edu.degree %> <%= edu.field_of_study ? 'in ' + edu.field_of_study : '' %>
+          </div>
+          <% if (edu.description) { %>
+            <p class="timeline-desc"><%= edu.description %></p>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- Skills & Endorsements -->
+<% if (sectionVisibility.skills !== false) { %>
+<section class="section <%= sectionVisibility.education === false ? 'section--dark' : '' %>" id="all-skills">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Expertise</span>
+      <h2 class="section-title">Skills & Endorsements</h2>
+    </div>
+    <div class="skills-categories">
+      <% Object.entries(skillsByCategory).forEach(([category, catSkills], catIndex) => { %>
+      <div class="skill-category reveal" style="--delay: <%= catIndex * 0.1 %>s">
+        <h3 class="category-title"><%= category %></h3>
+        <div class="skills-list">
+          <% catSkills.forEach(skill => { %>
+          <div class="skill-item" style="margin-bottom:20px;">
+            <div class="skill-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="skill-icon"><%= skill.icon %></span>
+                <span class="skill-name"><%= skill.name %></span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="skill-percent" style="font-size:0.85rem;"><%= skill.proficiency %>%</span>
+                
+                <!-- Endorsement display badge -->
+                <% if (skill.endorsements && skill.endorsements.length > 0) { %>
+                  <span class="endorse-badge" style="font-size:0.75rem; background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:12px; color:var(--text-secondary);" title="Endorsed by: <%= skill.endorsements.map(e => '@' + e.username).join(', ') %>">
+                    <%= skill.endorsements.length %> Endorsements
+                  </span>
+                <% } %>
+                
+                <!-- Endorse action button -->
+                <% if (user && user.id !== portfolioUser.id) { %>
+                  <% 
+                    const alreadyEndorsed = skill.endorsements && skill.endorsements.some(e => e.username === user.username);
+                  %>
+                  <% if (alreadyEndorsed) { %>
+                    <span style="font-size:0.75rem; color:#1dd1a1;">✓ Endorsed</span>
+                  <% } else { %>
+                    <button class="endorseBtn btn btn-xs btn-outline" data-skill-id="<%= skill.id %>" data-username="<%= portfolioUser.username %>" style="padding:2px 6px; font-size:0.7rem;">+ Endorse</button>
+                  <% } %>
+                <% } %>
+              </div>
+            </div>
+            <div class="skill-bar">
+              <div class="skill-fill" data-width="<%= skill.proficiency %>%" style="--skill-width: <%= skill.proficiency %>%"></div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- Certificates -->
+<% if (sectionVisibility.certificates !== false && certificates.length > 0) { %>
+<section class="section section--dark" id="certificates">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Credentials</span>
+      <h2 class="section-title">Certifications</h2>
+    </div>
+    <div class="cert-grid">
+      <% certificates.forEach((cert, index) => { %>
+      <div class="cert-card reveal" style="--delay: <%= index * 0.1 %>s">
+        <div class="cert-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </div>
+        <h3 class="cert-title"><%= cert.title %></h3>
+        <p class="cert-issuer"><%= cert.issuer %></p>
+        <% if (cert.issue_date) { %>
+        <p class="cert-date"><%= cert.issue_date %></p>
+        <% } %>
+        <% if (cert.credential_url) { %>
+        <a href="<%= cert.credential_url %>" target="_blank" rel="noopener" class="cert-link">
+          View Credential
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <% } %>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- LinkedIn-Style Recommendations -->
+<section class="section" id="recommendations">
+  <div class="container" style="max-width:800px;">
+    <div class="section-header reveal">
+      <span class="section-tag">Endorsements</span>
+      <h2 class="section-title">Recommendations</h2>
+      <p class="section-subtitle">What others are saying about <%= portfolioUser.username %></p>
+    </div>
+
+    <!-- Recommendations list -->
+    <% if (recommendations.length > 0) { %>
+      <div style="display:flex; flex-direction:column; gap:24px; margin-bottom:40px;">
+        <% recommendations.forEach(rec => { %>
+          <div class="reveal" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:var(--radius); padding:20px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+              <div style="width: 40px; height: 40px; border-radius:50%; overflow:hidden; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center;">
+                <% if (rec.avatar_url) { %>
+                  <img src="<%= rec.avatar_url %>" alt="<%= rec.username %>" style="width:100%; height:100%; object-fit:cover;">
+                <% } else { %>
+                  <span style="font-weight:700; color:var(--accent);"><%= rec.username.charAt(0).toUpperCase() %></span>
+                <% } %>
+              </div>
+              <div>
+                <h4 style="margin:0; font-size:0.9rem;"><a href="/<%= rec.username %>" style="color:var(--text-primary);">@<%= rec.username %></a></h4>
+                <p style="margin:0; font-size:0.75rem; color:var(--text-secondary);"><%= rec.site_title || 'Developer Showcase' %></p>
+              </div>
+            </div>
+            <div style="font-style:italic; font-size:0.9rem; color:var(--text-secondary); border-left: 2px solid var(--accent); padding-left:12px; line-height:1.5;">
+              "<%= rec.content %>"
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:40px;">No recommendations have been shared yet.</p>
+    <% } %>
+
+    <!-- Submit Recommendation form -->
+    <% if (user && user.id !== portfolioUser.id) { %>
+      <div class="reveal" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:24px;">
+        <h3 style="margin-bottom:8px; font-size:1.1rem;">Write a Recommendation</h3>
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:16px;">Share your professional feedback. Once approved by the portfolio owner, it will appear here.</p>
+        
+        <form id="recommendForm" data-username="<%= portfolioUser.username %>" style="display:flex; flex-direction:column; gap:16px;">
+          <textarea id="recommendContent" class="form-input" rows="4" required placeholder="Write your professional endorsement here (min 10 characters)..." style="width:100%; background:rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius); color: var(--text-primary); padding:12px; font-family:inherit;"></textarea>
+          <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Submit Recommendation</button>
+          </div>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<!-- Client Side Connections Fetch -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // CSRF Header
+    const csrfToken = '<%= csrfToken %>';
+
+    // Connections handler
+    const connectBtn = document.getElementById('connectBtn');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', async () => {
+        const username = connectBtn.getAttribute('data-username');
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Connecting...';
+        
+        try {
+          const res = await fetch(`/${username}/connect`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken
+            }
+          });
+          const data = await res.json();
+          if (data.success) {
+            const wrapper = document.getElementById('connect-wrapper');
+            wrapper.innerHTML = `<span class="btn btn-outline" style="cursor:default; border-color:#ff9f43; color:#ff9f43;">✉ Request Pending</span>`;
+          } else {
+            alert(data.error || 'Failed to connect');
+            connectBtn.disabled = false;
+            connectBtn.textContent = 'Connect';
+          }
+        } catch(e) {
+          console.error(e);
+          connectBtn.disabled = false;
+          connectBtn.textContent = 'Connect';
+        }
+      });
+    }
+
+    // Endorsements handler
+    document.querySelectorAll('.endorseBtn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const username = btn.getAttribute('data-username');
+        const skillId = btn.getAttribute('data-skill-id');
+        btn.disabled = true;
+        
+        try {
+          const res = await fetch(`/${username}/endorse`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken
+            },
+            body: JSON.stringify({ skillId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            // Reload page to reflect endorsement count
+            window.location.reload();
+          } else {
+            alert(data.error || 'Failed to endorse');
+            btn.disabled = false;
+          }
+        } catch(e) {
+          console.error(e);
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Recommendation form handler
+    const recommendForm = document.getElementById('recommendForm');
+    if (recommendForm) {
+      recommendForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = recommendForm.getAttribute('data-username');
+        const content = document.getElementById('recommendContent').value;
+        const submitBtn = recommendForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        try {
+          const res = await fetch(`/${username}/recommend`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken
+            },
+            body: JSON.stringify({ content })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('Your recommendation has been submitted! It will show up on their portfolio once approved.');
+            document.getElementById('recommendContent').value = '';
+            submitBtn.textContent = 'Submitted ✓';
+          } else {
+            alert(data.error || 'Failed to submit recommendation');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Recommendation';
+          }
+        } catch(e) {
+          console.error(e);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Recommendation';
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/tail') %>

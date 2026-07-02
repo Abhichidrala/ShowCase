@@ -1,0 +1,52 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2><%= cert ? 'Edit Certificate' : 'New Certificate' %></h2>
+  <a href="/admin/certificates" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<% if (error) { %>
+<div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/admin/certificates<%= cert ? '/' + cert.id : '' %>" enctype="multipart/form-data" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-group">
+    <label for="title" class="form-label">Certificate Title *</label>
+    <input type="text" id="title" name="title" class="form-input" required value="<%= cert ? cert.title : '' %>">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="issuer" class="form-label">Issuer</label>
+      <input type="text" id="issuer" name="issuer" class="form-input" value="<%= cert ? cert.issuer : '' %>" placeholder="e.g. AWS, Google, Coursera">
+    </div>
+    <div class="form-group">
+      <label for="issue_date" class="form-label">Issue Date</label>
+      <input type="text" id="issue_date" name="issue_date" class="form-input" value="<%= cert ? cert.issue_date : '' %>" placeholder="YYYY-MM">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="credential_url" class="form-label">Credential URL</label>
+    <input type="url" id="credential_url" name="credential_url" class="form-input" value="<%= cert ? cert.credential_url : '' %>" placeholder="https://...">
+  </div>
+
+  <div class="form-group">
+    <label for="image" class="form-label">Certificate Image</label>
+    <input type="file" id="image" name="image" class="form-input-file" accept="image/*">
+    <% if (cert && cert.image_url) { %>
+    <div class="current-image">
+      <img src="<%= cert.image_url %>" alt="Current image" style="max-width: 200px; margin-top: 8px; border-radius: 8px;">
+    </div>
+    <% } %>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= cert ? 'Update Certificate' : 'Add Certificate' %></button>
+    <a href="/admin/certificates" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+
+<%- include('../../partials/admin-tail') %>

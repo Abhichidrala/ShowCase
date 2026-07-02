@@ -1,0 +1,56 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Projects</h2>
+  <a href="/admin/projects/new" class="btn btn-primary btn-sm">+ New Project</a>
+</div>
+
+<% if (success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (projects.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Featured</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% projects.forEach(project => { %>
+      <tr>
+        <td>
+          <div class="table-title">
+            <strong><%= project.title %></strong>
+            <small class="text-muted">/<%= project.slug %></small>
+          </div>
+        </td>
+        <td><span class="badge badge-<%= project.featured ? 'success' : 'muted' %>"><%= project.featured ? 'Yes' : 'No' %></span></td>
+        <td><%= new Date(project.created_at).toLocaleDateString() %></td>
+        <td>
+          <div class="table-actions">
+            <a href="/projects/<%= project.slug %>" target="_blank" class="btn btn-xs btn-outline" title="View">View</a>
+            <a href="/admin/projects/<%= project.id %>/edit" class="btn btn-xs btn-outline" title="Edit">Edit</a>
+            <form method="POST" action="/admin/projects/<%= project.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger" title="Delete">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No projects yet.</p>
+  <a href="/admin/projects/new" class="btn btn-primary btn-sm">Create your first project</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>

@@ -1,0 +1,47 @@
+<!-- header partial -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="nav-container">
+    <% if (typeof portfolioUser !== 'undefined' && portfolioUser) { %>
+      <!-- Visitor viewing user's portfolio -->
+      <a href="/<%= portfolioUser.username %>" class="nav-logo" aria-label="Home">
+        <span class="logo-gradient">&lt;/&gt;</span>
+        <span class="logo-text"><%= portfolioUser.username %></span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span class="hamburger"></span>
+      </button>
+      <ul class="nav-menu" id="navMenu" role="menubar">
+        <li role="none"><a href="/<%= portfolioUser.username %>" class="nav-link<%= currentPath === '/' + portfolioUser.username ? ' active' : '' %>" role="menuitem">Home</a></li>
+        <li role="none"><a href="/<%= portfolioUser.username %>/projects" class="nav-link<%= currentPath.startsWith('/' + portfolioUser.username + '/projects') ? ' active' : '' %>" role="menuitem">Projects</a></li>
+        <li role="none"><a href="/<%= portfolioUser.username %>/blog" class="nav-link<%= currentPath.startsWith('/' + portfolioUser.username + '/blog') ? ' active' : '' %>" role="menuitem">Blog</a></li>
+        <li role="none"><a href="/<%= portfolioUser.username %>/about" class="nav-link<%= currentPath.startsWith('/' + portfolioUser.username + '/about') ? ' active' : '' %>" role="menuitem">About</a></li>
+        <li role="none"><a href="/" class="nav-link nav-link--admin" role="menuitem">SaaS Platform</a></li>
+      </ul>
+    <% } else { %>
+      <!-- User browsing platform landing pages -->
+      <a href="/" class="nav-logo" aria-label="Home">
+        <span class="logo-gradient">&lt;/&gt;</span>
+        <span class="logo-text">Showcase</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span class="hamburger"></span>
+      </button>
+      <ul class="nav-menu" id="navMenu" role="menubar">
+        <li role="none"><a href="/" class="nav-link<%= currentPath === '/' ? ' active' : '' %>" role="menuitem">Home</a></li>
+        <li role="none"><a href="/discover" class="nav-link<%= currentPath.startsWith('/discover') ? ' active' : '' %>" role="menuitem">Discover</a></li>
+        <% if (user) { %>
+          <li role="none"><a href="/admin" class="nav-link nav-link--admin" role="menuitem">Dashboard</a></li>
+          <li role="none">
+            <form action="/logout" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="nav-link" style="background:none; border:none; cursor:pointer; font-weight: 500; font-family: inherit;">Logout</button>
+            </form>
+          </li>
+        <% } else { %>
+          <li role="none"><a href="/login" class="nav-link<%= currentPath === '/login' ? ' active' : '' %>" role="menuitem">Login</a></li>
+          <li role="none"><a href="/register" class="nav-link<%= currentPath === '/register' ? ' active' : '' %>" role="menuitem">Sign Up</a></li>
+        <% } %>
+      </ul>
+    <% } %>
+  </div>
+</nav>

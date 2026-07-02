@@ -1,0 +1,60 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2><%= exp ? 'Edit Experience' : 'New Experience' %></h2>
+  <a href="/admin/experience" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<% if (error) { %>
+<div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/admin/experience<%= exp ? '/' + exp.id : '' %>" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="role" class="form-label">Role / Title *</label>
+      <input type="text" id="role" name="role" class="form-input" required value="<%= exp ? exp.role : '' %>">
+    </div>
+    <div class="form-group">
+      <label for="company" class="form-label">Company *</label>
+      <input type="text" id="company" name="company" class="form-input" required value="<%= exp ? exp.company : '' %>">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="location" class="form-label">Location</label>
+    <input type="text" id="location" name="location" class="form-input" value="<%= exp ? exp.location : '' %>" placeholder="e.g. Remote, San Francisco, CA">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="start_date" class="form-label">Start Date *</label>
+      <input type="text" id="start_date" name="start_date" class="form-input" required value="<%= exp ? exp.start_date : '' %>" placeholder="YYYY-MM">
+    </div>
+    <div class="form-group">
+      <label for="end_date" class="form-label">End Date</label>
+      <input type="text" id="end_date" name="end_date" class="form-input" value="<%= exp ? exp.end_date : '' %>" placeholder="YYYY-MM (leave empty if current)">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-checkbox">
+      <input type="checkbox" name="is_current" value="1" <%= exp && exp.is_current ? 'checked' : '' %>>
+      <span>Currently working here</span>
+    </label>
+  </div>
+
+  <div class="form-group">
+    <label for="description" class="form-label">Description</label>
+    <textarea id="description" name="description" class="form-input form-textarea" rows="4"><%= exp ? exp.description : '' %></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= exp ? 'Update Experience' : 'Add Experience' %></button>
+    <a href="/admin/experience" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+
+<%- include('../../partials/admin-tail') %>

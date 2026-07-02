@@ -1,0 +1,60 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Skills</h2>
+  <a href="/admin/skills/new" class="btn btn-primary btn-sm">+ New Skill</a>
+</div>
+
+<% if (success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (skills.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Proficiency</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% skills.forEach(skill => { %>
+      <tr>
+        <td>
+          <div class="table-title">
+            <span class="skill-badge-small"><%= skill.icon %></span>
+            <strong><%= skill.name %></strong>
+          </div>
+        </td>
+        <td><span class="badge badge-info"><%= skill.category %></span></td>
+        <td>
+          <div class="mini-progress">
+            <div class="mini-progress-bar" style="width: <%= skill.proficiency %>%"></div>
+            <span><%= skill.proficiency %>%</span>
+          </div>
+        </td>
+        <td>
+          <div class="table-actions">
+            <a href="/admin/skills/<%= skill.id %>/edit" class="btn btn-xs btn-outline">Edit</a>
+            <form method="POST" action="/admin/skills/<%= skill.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No skills yet.</p>
+  <a href="/admin/skills/new" class="btn btn-primary btn-sm">Add your first skill</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>

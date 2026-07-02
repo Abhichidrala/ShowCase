@@ -1,0 +1,50 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Certificates</h2>
+  <a href="/admin/certificates/new" class="btn btn-primary btn-sm">+ New Certificate</a>
+</div>
+
+<% if (success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (certificates.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Issuer</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% certificates.forEach(cert => { %>
+      <tr>
+        <td><strong><%= cert.title %></strong></td>
+        <td><%= cert.issuer %></td>
+        <td><%= cert.issue_date || '—' %></td>
+        <td>
+          <div class="table-actions">
+            <a href="/admin/certificates/<%= cert.id %>/edit" class="btn btn-xs btn-outline">Edit</a>
+            <form method="POST" action="/admin/certificates/<%= cert.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No certificates yet.</p>
+  <a href="/admin/certificates/new" class="btn btn-primary btn-sm">Add your first certificate</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>

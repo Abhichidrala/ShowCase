@@ -1,0 +1,58 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Blog Posts</h2>
+  <a href="/admin/blogs/new" class="btn btn-primary btn-sm">+ New Post</a>
+</div>
+
+<% if (success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (blogs.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% blogs.forEach(blog => { %>
+      <tr>
+        <td>
+          <div class="table-title">
+            <strong><%= blog.title %></strong>
+            <small class="text-muted">/<%= blog.slug %></small>
+          </div>
+        </td>
+        <td><span class="badge badge-<%= blog.published ? 'success' : 'warning' %>"><%= blog.published ? 'Published' : 'Draft' %></span></td>
+        <td><%= new Date(blog.created_at).toLocaleDateString() %></td>
+        <td>
+          <div class="table-actions">
+            <% if (blog.published) { %>
+            <a href="/blog/<%= blog.slug %>" target="_blank" class="btn btn-xs btn-outline">View</a>
+            <% } %>
+            <a href="/admin/blogs/<%= blog.id %>/edit" class="btn btn-xs btn-outline">Edit</a>
+            <form method="POST" action="/admin/blogs/<%= blog.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No blog posts yet.</p>
+  <a href="/admin/blogs/new" class="btn btn-primary btn-sm">Write your first post</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>

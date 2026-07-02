@@ -1,0 +1,53 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2><%= edu ? 'Edit Education' : 'New Education' %></h2>
+  <a href="/admin/education" class="btn btn-outline btn-sm">Cancel</a>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/admin/education<%= edu ? '/' + edu.id : '' %>" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-group">
+    <label for="institution" class="form-label">Institution Name *</label>
+    <input type="text" id="institution" name="institution" class="form-input" required value="<%= edu ? edu.institution : '' %>" placeholder="e.g. Stanford University">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="degree" class="form-label">Degree</label>
+      <input type="text" id="degree" name="degree" class="form-input" value="<%= edu ? edu.degree : '' %>" placeholder="e.g. Bachelor of Science">
+    </div>
+    <div class="form-group">
+      <label for="field_of_study" class="form-label">Field of Study</label>
+      <input type="text" id="field_of_study" name="field_of_study" class="form-input" value="<%= edu ? edu.field_of_study : '' %>" placeholder="e.g. Computer Science">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="start_date" class="form-label">Start Date *</label>
+      <input type="text" id="start_date" name="start_date" class="form-input" required placeholder="YYYY-MM" value="<%= edu ? edu.start_date : '' %>">
+    </div>
+    <div class="form-group">
+      <label for="end_date" class="form-label">End Date</label>
+      <input type="text" id="end_date" name="end_date" class="form-input" placeholder="YYYY-MM or Present" value="<%= edu ? edu.end_date : '' %>">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="description" class="form-label">Description / Achievements</label>
+    <textarea id="description" name="description" class="form-input" rows="4" placeholder="Describe coursework, honors, GPA, etc."><%= edu ? edu.description : '' %></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= edu ? 'Save Changes' : 'Create Education' %></button>
+    <a href="/admin/education" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+
+<%- include('../../partials/admin-tail') %>

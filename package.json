@@ -1,0 +1,19 @@
+{
+  "name": "career-showcase-platform",
+  "version": "1.0.0",
+  "description": "LinkedIn + GitHub Profile + Behance style Career Showcase Platform",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "db:seed": "node database/seeders/seed.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "sqlite3": "^6.0.1"
+  }
+}

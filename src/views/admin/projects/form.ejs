@@ -1,0 +1,69 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2><%= project ? 'Edit Project' : 'New Project' %></h2>
+  <a href="/admin/projects" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<% if (error) { %>
+<div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/admin/projects<%= project && project.id ? '/' + project.id : '' %>" enctype="multipart/form-data" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-group">
+    <label for="title" class="form-label">Title *</label>
+    <input type="text" id="title" name="title" class="form-input" required value="<%= project ? (project.title || '') : '' %>">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="live_url" class="form-label">Live URL</label>
+      <input type="url" id="live_url" name="live_url" class="form-input" value="<%= project ? (project.live_url || '') : '' %>" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label for="github_url" class="form-label">GitHub URL</label>
+      <input type="url" id="github_url" name="github_url" class="form-input" value="<%= project ? (project.github_url || '') : '' %>" placeholder="https://github.com/...">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="description" class="form-label">Short Description *</label>
+    <textarea id="description" name="description" class="form-input" rows="2" required><%= project ? (project.description || '') : '' %></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="long_description" class="form-label">Full Description (Markdown)</label>
+    <textarea id="long_description" name="long_description" class="form-input form-textarea" rows="8"><%= project ? (project.long_description || '') : '' %></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="tech_stack" class="form-label">Tech Stack (comma-separated)</label>
+    <input type="text" id="tech_stack" name="tech_stack" class="form-input" value="<%= project ? (project.tech_stack_str || '') : '' %>" placeholder="React, Node.js, PostgreSQL">
+  </div>
+
+  <div class="form-group">
+    <label for="image" class="form-label">Project Image</label>
+    <input type="file" id="image" name="image" class="form-input-file" accept="image/*">
+    <% if (project && project.image_url) { %>
+    <div class="current-image">
+      <img src="<%= project.image_url %>" alt="Current image" style="max-width: 200px; margin-top: 8px; border-radius: 8px;">
+    </div>
+    <% } %>
+  </div>
+
+  <div class="form-group">
+    <label class="form-checkbox">
+      <input type="checkbox" name="featured" value="1" <%= project && project.featured ? 'checked' : '' %>>
+      <span>Featured Project</span>
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= project ? 'Update Project' : 'Create Project' %></button>
+    <a href="/admin/projects" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+
+<%- include('../../partials/admin-tail') %>

@@ -1,0 +1,54 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Education History</h2>
+  <a href="/admin/education/new" class="btn btn-primary btn-sm">+ New Education</a>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (education.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Institution</th>
+        <th>Degree / Field</th>
+        <th>Dates</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% education.forEach(edu => { %>
+      <tr>
+        <td>
+          <div class="table-title">
+            <strong><%= edu.institution %></strong>
+          </div>
+        </td>
+        <td><%= edu.degree %> in <%= edu.field_of_study %></td>
+        <td><%= edu.start_date %> to <%= edu.end_date || 'Present' %></td>
+        <td>
+          <div class="table-actions">
+            <a href="/admin/education/<%= edu.id %>/edit" class="btn btn-xs btn-outline">Edit</a>
+            <form method="POST" action="/admin/education/<%= edu.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No education history added yet.</p>
+  <a href="/admin/education/new" class="btn btn-primary btn-sm">Add education</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>

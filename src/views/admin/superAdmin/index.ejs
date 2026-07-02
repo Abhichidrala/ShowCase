@@ -1,0 +1,157 @@
+<%- include('../partials/admin-head') %>
+
+<!-- Statistics Grid -->
+<div class="dashboard-grid" style="margin-bottom:32px;">
+  <div class="stat-card stat-card--accent">
+    <div class="stat-card-info">
+      <span class="stat-card-number"><%= stats.totalUsers %></span>
+      <span class="stat-card-label">Total Users</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--green">
+    <div class="stat-card-info">
+      <span class="stat-card-number"><%= stats.verifiedUsers %></span>
+      <span class="stat-card-label">Verified Badges</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--purple">
+    <div class="stat-card-info">
+      <span class="stat-card-number"><%= stats.suspendedUsers %></span>
+      <span class="stat-card-label">Suspended Users</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--orange">
+    <div class="stat-card-info">
+      <span class="stat-card-number"><%= stats.totalReports %></span>
+      <span class="stat-card-label">Pending Reports</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--cyan">
+    <div class="stat-card-info">
+      <span class="stat-card-number"><%= stats.totalProjects %></span>
+      <span class="stat-card-label">Total Projects</span>
+    </div>
+  </div>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success" style="margin-bottom: 24px;"><%= success %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-error" style="margin-bottom: 24px;"><%= error %></div>
+<% } %>
+
+<!-- Reports Queue Panel -->
+<div class="panel" style="margin-bottom: 32px;">
+  <div class="panel-header">
+    <h2>Reports Moderation Queue</h2>
+  </div>
+  <div class="panel-body">
+    <% if (reports.length > 0) { %>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Report Details</th>
+              <th>Reporter</th>
+              <th>Reported Portfolio</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% reports.forEach(report => { %>
+              <tr>
+                <td><%= new Date(report.created_at).toLocaleDateString() %></td>
+                <td>@<%= report.reporter_username %></td>
+                <td><strong>@<%= report.reported_username %></strong></td>
+                <td><em style="color:var(--admin-text-secondary);"><%= report.reason %></em></td>
+                <td>
+                  <div class="table-actions" style="display:flex; gap:10px;">
+                    <form method="POST" action="/super-admin/reports/<%= report.id %>/dismiss">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-xs btn-outline">Dismiss</button>
+                    </form>
+                    <form method="POST" action="/super-admin/reports/<%= report.id %>/clear-portfolio">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-xs btn-warning" style="background:#ee5253; color:#fff; border:none;">Purge Portfolio</button>
+                    </form>
+                    <form method="POST" action="/super-admin/users/<%= report.reported_user_id %>/suspend">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-xs btn-danger">Toggle Suspend</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p style="color:var(--admin-text-muted); text-align:center; padding:20px;">No pending content reports.</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- Users Directory Management -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Platform User Accounts</h2>
+  </div>
+  <div class="panel-body">
+    <div class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Badges</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(usr => { %>
+            <tr>
+              <td><strong>@<%= usr.username %></strong></td>
+              <td><%= usr.email %></td>
+              <td><span class="badge" style="background: <%= usr.role === 'super_admin' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.03)' %>; color:var(--admin-text);"><%= usr.role %></span></td>
+              <td>
+                <span class="badge badge-<%= usr.is_verified ? 'success' : 'warning' %>">
+                  <%= usr.is_verified ? 'Verified' : 'Unverified' %>
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: <%= usr.is_suspended ? 'rgba(238,82,83,0.2)' : 'rgba(16,172,132,0.2)' %>; color: <%= usr.is_suspended ? '#ff7675' : '#1dd1a1' %>;">
+                  <%= usr.is_suspended ? 'Suspended' : 'Active' %>
+                </span>
+              </td>
+              <td>
+                <div class="table-actions" style="display:flex; gap:8px;">
+                  <form method="POST" action="/super-admin/users/<%= usr.id %>/verify">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-xs btn-outline">
+                      <%= usr.is_verified ? 'Revoke Badges' : 'Verify Account' %>
+                    </button>
+                  </form>
+                  <% if (usr.role !== 'super_admin') { %>
+                    <form method="POST" action="/super-admin/users/<%= usr.id %>/suspend">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-xs btn-outline" style="color: <%= usr.is_suspended ? '#1dd1a1' : '#ff7675' %>;">
+                        <%= usr.is_suspended ? 'Unsuspend' : 'Suspend' %>
+                      </button>
+                    </form>
+                  <% } %>
+                  <a href="/<%= usr.username %>" target="_blank" class="btn btn-xs btn-outline">View Portfolio</a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-tail') %>

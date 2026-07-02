@@ -1,0 +1,70 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Portfolio Gallery</h2>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<!-- Upload Form Panel -->
+<div class="panel" style="margin-bottom: 32px;">
+  <div class="panel-header">
+    <h2>Upload Image to Gallery</h2>
+  </div>
+  <div class="panel-body">
+    <form method="POST" action="/admin/gallery" enctype="multipart/form-data" class="admin-form" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      
+      <div class="form-group" style="flex:1; min-width:250px; margin:0;">
+        <label for="title" class="form-label">Image Label/Title</label>
+        <input type="text" id="title" name="title" class="form-input" placeholder="e.g. Design Wireframe Mockup">
+      </div>
+      
+      <div class="form-group" style="flex:1; min-width:250px; margin:0;">
+        <label for="image" class="form-label">Select Image File</label>
+        <input type="file" id="image" name="image" class="form-input" required accept="image/*">
+      </div>
+      
+      <button type="submit" class="btn btn-primary" style="height:44px;">Upload Image</button>
+    </form>
+  </div>
+</div>
+
+<!-- Image Grid Gallery -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Gallery Collection</h2>
+  </div>
+  <div class="panel-body">
+    <% if (items.length > 0) { %>
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
+        <% items.forEach(item => { %>
+          <div style="background: rgba(255,255,255,0.02); border:1px solid var(--admin-border); border-radius:var(--admin-radius); overflow:hidden; display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="position:relative; aspect-ratio: 4/3; background: #000; display:flex; align-items:center; justify-content:center;">
+              <img src="<%= item.image_url %>" alt="<%= item.title %>" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div style="padding:16px; display:flex; flex-direction:column; gap:10px;">
+              <strong style="font-size:0.9rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;"><%= item.title || 'Untitled Image' %></strong>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem; color:var(--admin-text-muted);"><%= new Date(item.created_at).toLocaleDateString() %></span>
+                <form method="POST" action="/admin/gallery/<%= item.id %>/delete">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-xs btn-danger" style="background:#ee5253; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p style="color:var(--admin-text-muted); text-align:center; padding:20px;">No gallery items uploaded yet.</p>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/admin-tail') %>

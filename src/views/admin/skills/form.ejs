@@ -1,0 +1,43 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2><%= skill ? 'Edit Skill' : 'New Skill' %></h2>
+  <a href="/admin/skills" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<% if (error) { %>
+<div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/admin/skills<%= skill ? '/' + skill.id : '' %>" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="name" class="form-label">Skill Name *</label>
+      <input type="text" id="name" name="name" class="form-input" required value="<%= skill ? skill.name : '' %>">
+    </div>
+    <div class="form-group">
+      <label for="icon" class="form-label">Icon (2-3 letter abbreviation)</label>
+      <input type="text" id="icon" name="icon" class="form-input" maxlength="3" value="<%= skill ? skill.icon : '' %>" placeholder="JS">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="category" class="form-label">Category *</label>
+      <input type="text" id="category" name="category" class="form-input" required value="<%= skill ? skill.category : '' %>" placeholder="Frontend, Backend, DevOps, Design">
+    </div>
+    <div class="form-group">
+      <label for="proficiency" class="form-label">Proficiency (0-100) *</label>
+      <input type="number" id="proficiency" name="proficiency" class="form-input" min="0" max="100" required value="<%= skill ? skill.proficiency : 50 %>">
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= skill ? 'Update Skill' : 'Add Skill' %></button>
+    <a href="/admin/skills" class="btn btn-outline">Cancel</a>
+  </div>
+</form>
+
+<%- include('../../partials/admin-tail') %>

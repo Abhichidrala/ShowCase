@@ -1,0 +1,278 @@
+<%- include('../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Site Settings</h2>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-error"><%= error %> %></div>
+<% } %>
+
+<form method="POST" action="/admin/settings" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <!-- General Settings Section -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">General</h3>
+    <div class="form-group">
+      <label for="site_title" class="form-label">Site Title</label>
+      <input type="text" id="site_title" name="site_title" class="form-input" value="<%= settings.site_title || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="site_description" class="form-label">Site Description</label>
+      <textarea id="site_description" name="site_description" class="form-input" rows="2"><%= settings.site_description || '' %></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="privacy_status" class="form-label">Privacy Visibility</label>
+        <select id="privacy_status" name="privacy_status" class="form-input" style="background:#000; color:#fff; border: 1px solid var(--admin-border); border-radius: 6px; padding: 10px;">
+          <option value="public" <%= settings.privacy_status === 'public' ? 'selected' : '' %>>Public (Visible to everyone)</option>
+          <option value="private" <%= settings.privacy_status === 'private' ? 'selected' : '' %>>Private (Visible only to you)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="analytics_code" class="form-label">Google Analytics / Tag ID</label>
+        <input type="text" id="analytics_code" name="analytics_code" class="form-input" value="<%= settings.analytics_code || '' %>" placeholder="G-XXXXXX">
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections Visibility Controls -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">Portfolio Sections Visibility</h3>
+    <p style="font-size:0.8rem; color:var(--admin-text-secondary); margin-bottom:16px;">Toggle which components are visible on your public portfolio pages.</p>
+    <% 
+      let vis = {};
+      try {
+        vis = typeof settings.section_visibility === 'string' ? JSON.parse(settings.section_visibility) : (settings.section_visibility || {});
+      } catch(e) {
+        vis = {};
+      }
+    %>
+    <input type="hidden" id="section_visibility" name="section_visibility" value='<%= typeof settings.section_visibility === "string" ? settings.section_visibility : JSON.stringify(settings.section_visibility || {}) %>'>
+    
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+      <% ['projects', 'skills', 'experience', 'education', 'certificates', 'blogs', 'gallery'].forEach(sec => { %>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" class="sec-toggle" data-section="<%= sec %>" <%= vis[sec] !== false ? 'checked' : '' %> style="width:16px; height:16px; accent-color:var(--admin-accent);">
+          <span style="font-size:0.9rem; text-transform:capitalize;"><%= sec %></span>
+        </label>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">Hero Section</h3>
+    <div class="form-group">
+      <label for="hero_title" class="form-label">Hero Title</label>
+      <input type="text" id="hero_title" name="hero_title" class="form-input" value="<%= settings.hero_title || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="hero_subtitle" class="form-label">Hero Subtitle (Typing animation text)</label>
+      <input type="text" id="hero_subtitle" name="hero_subtitle" class="form-input" value="<%= settings.hero_subtitle || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="hero_description" class="form-label">Hero Description</label>
+      <textarea id="hero_description" name="hero_description" class="form-input" rows="3"><%= settings.hero_description || '' %></textarea>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">About</h3>
+    <div class="form-group">
+      <label for="about_bio" class="form-label">Bio</label>
+      <textarea id="about_bio" name="about_bio" class="form-input form-textarea" rows="4"><%= settings.about_bio || '' %></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="avatar_url" class="form-label">Avatar URL</label>
+        <input type="text" id="avatar_url" name="avatar_url" class="form-input" value="<%= settings.avatar_url || '' %>" placeholder="/uploads/avatar.jpg">
+      </div>
+      <div class="form-group">
+        <label for="resume_url" class="form-label">Resume URL</label>
+        <input type="text" id="resume_url" name="resume_url" class="form-input" value="<%= settings.resume_url || '' %>" placeholder="/uploads/resume.pdf">
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Links -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">Social Links</h3>
+    <div class="form-group">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" id="email" name="email" class="form-input" value="<%= settings.email || '' %>">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="github_url" class="form-label">GitHub URL</label>
+        <input type="url" id="github_url" name="github_url" class="form-input" value="<%= settings.github_url || '' %>">
+      </div>
+      <div class="form-group">
+        <label for="linkedin_url" class="form-label">LinkedIn URL</label>
+        <input type="url" id="linkedin_url" name="linkedin_url" class="form-input" value="<%= settings.linkedin_url || '' %>">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="twitter_url" class="form-label">Twitter/X URL</label>
+      <input type="url" id="twitter_url" name="twitter_url" class="form-input" value="<%= settings.twitter_url || '' %>">
+    </div>
+  </div>
+
+  <!-- Theme Selection -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">Theme Options</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="theme_template" class="form-label">Active Template Layout</label>
+        <select id="theme_template" name="theme_template" class="form-input" style="background:#000; color:#fff; border: 1px solid var(--admin-border); border-radius: 6px; padding: 10px;">
+          <option value="classic-dark" <%= settings.theme_template === 'classic-dark' ? 'selected' : '' %>>Classic Dark (Glassmorphism)</option>
+          <option value="neon-glow" <%= settings.theme_template === 'neon-glow' ? 'selected' : '' %>>Neon Glow (Vibrant cyan glows)</option>
+          <option value="cyberpunk-mint" <%= settings.theme_template === 'cyberpunk-mint' ? 'selected' : '' %>>Cyberpunk Mint (Bold borders)</option>
+          <option value="minimal-slate" <%= settings.theme_template === 'minimal-slate' ? 'selected' : '' %>>Minimal Slate (Sleek dark gray)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:16px;">
+      <div class="form-group">
+        <label for="accent_color" class="form-label">Accent Color</label>
+        <div class="color-input-wrapper" style="display:flex; gap:10px;">
+          <input type="color" id="accent_color_picker" value="<%= settings.accent_color || '#ffffff' %>" class="form-color" style="width:44px; height:44px; padding:0; border-radius:6px; border:none; cursor:pointer;">
+          <input type="text" id="accent_color" name="accent_color" class="form-input" value="<%= settings.accent_color || '#ffffff' %>" style="flex:1;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="accent_gradient" class="form-label">Accent Gradient</label>
+        <input type="text" id="accent_gradient" name="accent_gradient" class="form-input" value="<%= settings.accent_gradient || '' %>" placeholder="linear-gradient(135deg, #ffffff, #666666)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="settings-section">
+    <h3 class="settings-section-title">Footer</h3>
+    <div class="form-group">
+      <label for="footer_text" class="form-label">Footer Text</label>
+      <input type="text" id="footer_text" name="footer_text" class="form-input" value="<%= settings.footer_text || '' %>">
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+  </div>
+</form>
+
+<hr class="settings-divider" style="margin: 40px 0; border: none; border-top: 1px solid var(--admin-border);">
+
+<!-- Two Factor Security Section -->
+<div class="settings-section">
+  <h3 class="settings-section-title">Two-Factor Authentication (2FA)</h3>
+  <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 24px;">
+    <% if (user.two_factor_enabled) { %>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#1dd1a1;"></span>
+        <strong style="color:#1dd1a1;">2FA Security is ACTIVE</strong>
+      </div>
+      <p style="font-size:0.9rem; color:var(--admin-text-secondary); margin-bottom:20px;">To disable two-factor authentication, input a 6-digit TOTP token below and click disable.</p>
+      
+      <form method="POST" action="/admin/2fa/disable" class="admin-form" style="display:flex; gap:12px; align-items:flex-end; max-width:400px;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group" style="margin:0; flex:1;">
+          <input type="text" name="token" class="form-input" placeholder="6-digit TOTP Token" required pattern="[0-9]{6}">
+        </div>
+        <button type="submit" class="btn btn-outline" style="color:#ff7675; border-color:#ff7675;">Disable 2FA</button>
+      </form>
+    <% } else { %>
+      <div style="margin-bottom:20px;">
+        <span style="color:var(--admin-text-secondary); font-size:0.9rem;">Two-factor authentication adds an extra layer of security to your showcase account.</span>
+      </div>
+      
+      <% if (totp) { %>
+        <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:center; margin-bottom:20px; background:rgba(0,0,0,0.3); padding:20px; border-radius:8px;">
+          <div>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= encodeURIComponent(totp.otpauthUrl) %>" alt="QR Code" style="background:#fff; padding:6px; border-radius:4px;">
+          </div>
+          <div style="flex:1;">
+            <h4 style="margin:0 0 8px 0;">Configure Authenticator</h4>
+            <p style="font-size:0.85rem; color:var(--admin-text-secondary); margin-bottom:12px;">Scan the QR code with Google Authenticator or Microsoft Authenticator, or manually key in: <strong style="font-family:var(--font-mono); color:var(--admin-accent);"><%= totp.secret %></strong></p>
+            
+            <form method="POST" action="/admin/2fa/verify" class="admin-form" style="display:flex; gap:12px; align-items:flex-end;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="form-group" style="margin:0; flex:1;">
+                <input type="text" name="token" class="form-input" placeholder="TOTP Verification Code" required pattern="[0-9]{6}">
+              </div>
+              <button type="submit" class="btn btn-primary">Enable 2FA</button>
+            </form>
+          </div>
+        </div>
+      <% } else { %>
+        <form method="POST" action="/admin/2fa/setup">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-primary">Enable Two-Factor Authentication</button>
+        </form>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<hr class="settings-divider" style="margin: 40px 0; border: none; border-top: 1px solid var(--admin-border);">
+
+<!-- Change Password -->
+<div class="settings-section">
+  <h3 class="settings-section-title">Change Password</h3>
+  <form method="POST" action="/admin/change-password" class="admin-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-group">
+      <label for="current_password" class="form-label">Current Password</label>
+      <input type="password" id="current_password" name="current_password" class="form-input" required>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="new_password" class="form-label">New Password</label>
+        <input type="password" id="new_password" name="new_password" class="form-input" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm New Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-input" required minlength="6">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-outline">Change Password</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Sync the color picker values
+  const picker = document.getElementById('accent_color_picker');
+  const input = document.getElementById('accent_color');
+  if (picker && input) {
+    picker.addEventListener('input', (e) => {
+      input.value = e.target.value;
+    });
+    input.addEventListener('change', (e) => {
+      picker.value = e.target.value;
+    });
+  }
+
+  // Handle section visibility changes
+  const checkboxes = document.querySelectorAll('.sec-toggle');
+  const hiddenInput = document.getElementById('section_visibility');
+  if (checkboxes.length && hiddenInput) {
+    checkboxes.forEach(chk => {
+      chk.addEventListener('change', () => {
+        const visObj = JSON.parse(hiddenInput.value || '{}');
+        checkboxes.forEach(c => {
+          visObj[c.getAttribute('data-section')] = c.checked;
+        });
+        hiddenInput.value = JSON.stringify(visObj);
+      });
+    });
+  }
+</script>
+
+<%- include('../partials/admin-tail') %>

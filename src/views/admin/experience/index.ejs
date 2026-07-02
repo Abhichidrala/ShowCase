@@ -1,0 +1,52 @@
+<%- include('../../partials/admin-head') %>
+
+<div class="content-header">
+  <h2>Experience</h2>
+  <a href="/admin/experience/new" class="btn btn-primary btn-sm">+ New Experience</a>
+</div>
+
+<% if (success) { %>
+<div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (experience.length > 0) { %>
+<div class="data-table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Company</th>
+        <th>Period</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% experience.forEach(exp => { %>
+      <tr>
+        <td><strong><%= exp.role %></strong></td>
+        <td><%= exp.company %></td>
+        <td><%= exp.start_date %> — <%= exp.is_current ? 'Present' : (exp.end_date || 'N/A') %></td>
+        <td><span class="badge badge-<%= exp.is_current ? 'success' : 'muted' %>"><%= exp.is_current ? 'Current' : 'Past' %></span></td>
+        <td>
+          <div class="table-actions">
+            <a href="/admin/experience/<%= exp.id %>/edit" class="btn btn-xs btn-outline">Edit</a>
+            <form method="POST" action="/admin/experience/<%= exp.id %>/delete" class="inline-form delete-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty-state-admin">
+  <p>No experience entries yet.</p>
+  <a href="/admin/experience/new" class="btn btn-primary btn-sm">Add your first experience</a>
+</div>
+<% } %>
+
+<%- include('../../partials/admin-tail') %>
