@@ -5,11 +5,17 @@ const smtpPassClean = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+
 
 // Create a reusable transporter using Gmail SMTP
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  family: 4,
   auth: {
     user: process.env.SMTP_USER,
     pass: smtpPassClean,
   },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 // Verify SMTP connection configuration on startup
