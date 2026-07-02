@@ -16,6 +16,7 @@ const superAdminRoutes = require('./routes/superAdmin');
 const publicRoutes = require('./routes/public');
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -93,8 +94,8 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
-  res.status(err.status || 500).json({ 
-    error: err.message || 'Something went wrong on the server' 
+  res.status(err.status || 500).json({
+    error: err.message || 'Something went wrong on the server'
   });
 });
 
