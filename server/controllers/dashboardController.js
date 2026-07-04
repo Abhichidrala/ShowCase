@@ -30,7 +30,15 @@ const DashboardController = {
     try {
       const profile = await dbGet('SELECT * FROM profiles WHERE user_id = ?', [userId]);
       const settings = await dbGet('SELECT * FROM portfolio_settings WHERE user_id = ?', [userId]);
-      res.json({ profile, settings });
+      // Include user-level data (e.g. 2FA status) that lives on users table
+      const userInfo = await dbGet('SELECT email, two_factor_enabled, gender FROM users WHERE id = ?', [userId]);
+      const enrichedProfile = profile ? { 
+        ...profile, 
+        two_factor_enabled: userInfo?.two_factor_enabled || 0,
+        user_email: userInfo?.email,
+        gender: userInfo?.gender
+      } : null;
+      res.json({ profile: enrichedProfile, settings });
     } catch (err) {
       next(err);
     }

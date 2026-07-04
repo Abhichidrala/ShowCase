@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://showcase-pwyf.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,8 +42,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if error is 401 and request has not been retried yet
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    // Skip token refresh logic for auth endpoints (login, register, refresh)
+    const isAuthEndpoint = originalRequest.url && (
+      originalRequest.url.includes('/auth/login') ||
+      originalRequest.url.includes('/auth/register') ||
+      originalRequest.url.includes('/auth/refresh') ||
+      originalRequest.url.includes('/auth/logout')
+    );
+
+    // Check if error is 401 and request has not been retried yet, and not an auth endpoint
+    if (error.response && error.response.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

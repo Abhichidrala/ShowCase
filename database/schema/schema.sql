@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     email TEXT,
     accent_color TEXT DEFAULT '#3b82f6',
     accent_gradient TEXT DEFAULT 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    ring_color TEXT DEFAULT '#ffffff',
     footer_text TEXT,
     theme_id INTEGER REFERENCES themes(id) ON DELETE SET NULL,
     privacy_status TEXT DEFAULT 'public', -- 'public', 'private'

@@ -1,4 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+
+// Safe JSON parse for tech_stack arrays
+function safeParseTechStack(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return typeof value === 'string' ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
+}
+
+// Resolve image URL (handles relative upload paths via Vite proxy)
+function resolveImageUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  // Relative paths served through Vite proxy to backend /uploads
+  return url;
+}
 import { useParams, Link } from 'react-router-dom';
 import apiService from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +58,16 @@ export default function PublicPortfolio() {
       const themeClass = res.profile?.theme_name ? `theme-${res.profile.theme_name}` : 'theme-classic-dark';
       document.body.className = themeClass;
 
+      if (res.profile?.accent_color) {
+        const c = res.profile.accent_color;
+        document.documentElement.style.setProperty('--accent-color', c);
+        document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${c}22 0%, transparent 100%)`);
+        document.documentElement.style.setProperty('--primary-color', c);
+        document.documentElement.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${c} 0%, ${c}88 50%, ${c}44 100%)`);
+        document.documentElement.style.setProperty('--btn-primary-text', '#ffffff');
+        document.documentElement.style.setProperty('--shadow-glow', `0 0 24px ${c}30`);
+      }
+
       // Track analytics visit
       apiService.public.trackAnalytics(username, 'page_view');
     } catch (err) {
@@ -54,6 +84,12 @@ export default function PublicPortfolio() {
     // Clean up theme class when unmounting page
     return () => {
       document.body.className = '';
+      document.documentElement.style.removeProperty('--accent-color');
+      document.documentElement.style.removeProperty('--accent-gradient');
+      document.documentElement.style.removeProperty('--primary-color');
+      document.documentElement.style.removeProperty('--primary-gradient');
+      document.documentElement.style.removeProperty('--btn-primary-text');
+      document.documentElement.style.removeProperty('--shadow-glow');
     };
   }, [username]);
 
@@ -172,34 +208,39 @@ export default function PublicPortfolio() {
   const { profile, settings, projects, skills, experience, education, certificates, achievements, socialLinks, blogs, recommendations, isFollowing, followersCount } = data;
 
   return (
-    <div className="container animate-fade-in" style={{ paddingTop: '40px' }}>
-      
+    <div className="container animate-fade-in" style={{ paddingTop: '60px', paddingBottom: '60px', position: 'relative' }}>
+      {/* Background ambient decorative glowing orbs */}
+      <div className="animate-float-blob" style={{ position: 'fixed', top: '10%', left: '5%', width: '380px', height: '380px', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none', filter: 'blur(50px)', zIndex: -1 }}></div>
+      <div className="animate-float-blob-slow" style={{ position: 'fixed', bottom: '15%', right: '5%', width: '420px', height: '420px', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.02) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none', filter: 'blur(60px)', zIndex: -1 }}></div>
+
       {/* --- HERO / PORTFOLIO HEADER --- */}
-      <section className="card flex justify-between items-center" style={{ marginBottom: '40px', flexWrap: 'wrap', gap: '24px' }}>
-        <div className="flex items-center gap-4" style={{ flexWrap: 'wrap', textAlign: 'left' }}>
+      <section className="glass-panel flex justify-between items-center" style={{ marginBottom: '40px', flexWrap: 'wrap', gap: '28px', padding: '36px' }}>
+        <div className="flex items-center gap-6" style={{ flexWrap: 'wrap', textAlign: 'left' }}>
           <img
-            src={profile.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`}
+            src={resolveImageUrl(profile.avatar_url) || `https://api.dicebear.com/9.x/adventurer/svg?seed=${username}&skinColor=f8d9b2`}
+            onError={(e) => { e.target.src = `https://api.dicebear.com/9.x/initials/svg?seed=${username}`; }}
             alt={username}
-            style={{ width: '100px', height: '100px', borderRadius: '50%', border: `3px solid ${profile.accent_color}` }}
+            className="avatar"
+            style={{ width: '108px', height: '108px' }}
           />
           <div>
-            <div className="flex items-center gap-2">
-              <h2 style={{ fontSize: '2rem' }}>{profile.site_title || username}</h2>
-              <span className="badge badge-primary">@{username}</span>
+            <div className="flex items-center gap-3" style={{ flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.03em' }}>{profile.site_title || username}</h2>
+              <span className="badge badge-primary" style={{ fontSize: '0.8rem', padding: '4px 12px' }}>@{username}</span>
             </div>
-            <p style={{ fontSize: '1.1rem', color: 'var(--accent-color)', fontWeight: 600, marginTop: '4px' }}>
+            <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: 700, marginTop: '6px' }}>
               {profile.hero_subtitle || 'Creative Software Engineer'}
             </p>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '6px', fontWeight: 500 }}>
               {followersCount} Followers
             </p>
           </div>
         </div>
 
         {/* Social interactions */}
-        <div className="flex gap-2">
+        <div className="flex gap-3" style={{ alignItems: 'center' }}>
           {user && user.username !== username && (
-            <button onClick={handleFollowToggle} className={`btn btn-${isFollowing ? 'secondary' : 'primary'}`}>
+            <button onClick={handleFollowToggle} className={`btn btn-${isFollowing ? 'secondary' : 'primary'}`} style={{ height: '44px', borderRadius: 'var(--radius-sm)' }}>
               {isFollowing ? (
                 <>
                   <UserMinus size={16} /> Unfollow
@@ -212,7 +253,7 @@ export default function PublicPortfolio() {
             </button>
           )}
           
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
             {socialLinks.map(link => (
               <a 
                 key={link.id} 
@@ -220,7 +261,7 @@ export default function PublicPortfolio() {
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-secondary" 
-                style={{ padding: '8px' }}
+                style={{ padding: '10px', height: '44px', width: '44px', borderRadius: 'var(--radius-sm)', justifyContent: 'center' }}
                 title={link.platform}
               >
                 {link.platform === 'github' && <Github size={18} />}
@@ -234,169 +275,173 @@ export default function PublicPortfolio() {
       </section>
 
       {/* --- HERO DESCRIPTION / ABOUT BIO --- */}
-      <section className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '32px', marginBottom: '40px' }}>
+      <section className="grid" style={{ gridTemplateColumns: skills.length > 0 ? '2fr 1fr' : '1fr', gap: '32px', marginBottom: '40px' }}>
         
         {/* Main Bio Pitch */}
-        <div className="card flex flex-col justify-center" style={{ textAlign: 'left' }}>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'var(--accent-color)' }}>
+        <div className="card flex flex-col justify-center" style={{ textAlign: 'left', padding: '36px' }}>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '20px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             {profile.hero_title || `Welcome to my showcase`}
           </h3>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '16px' }}>
+          <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: 1.7 }}>
             {profile.hero_description}
           </p>
-          <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
             {profile.about_bio}
           </p>
         </div>
 
         {/* Skills Categories list */}
-        <div className="card" style={{ textAlign: 'left' }}>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '20px' }}>Key Skills</h3>
-          <div className="flex flex-col gap-4">
-            {skills.map(s => (
-              <div key={s.id}>
-                <div className="flex justify-between" style={{ fontSize: '0.85rem', marginBottom: '4px' }}>
-                  <span>{s.name}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{s.proficiency}%</span>
+        {skills.length > 0 && (
+          <div className="card" style={{ textAlign: 'left', padding: '36px' }}>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '24px' }}>Key Skills</h3>
+            <div className="flex flex-col gap-5">
+              {skills.map((s, index) => (
+                <div key={s.id} className={`animate-fade-in-up animate-stagger-${(index % 5) + 1}`}>
+                  <div className="flex justify-between" style={{ fontSize: '0.9rem', marginBottom: '6px', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{s.proficiency}%</span>
+                  </div>
+                  <div style={{ height: '8px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${s.proficiency}%`, height: '100%', background: 'var(--primary-gradient)', borderRadius: '4px' }} />
+                  </div>
                 </div>
-                <div style={{ height: '6px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ width: `${s.proficiency}%`, height: '100%', backgroundColor: profile.accent_color }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- BEHANCE STYLE PROJECT DIRECTORY --- */}
-      <section style={{ marginBottom: '40px' }}>
-        <h2 style={{ textAlign: 'left', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Briefcase style={{ color: profile.accent_color }} /> Projects Showcase
-        </h2>
-        
-        <div className="grid grid-cols-3">
-          {projects.map(p => (
-            <div 
-              key={p.id} 
-              className="card card-hover flex flex-col justify-between" 
-              style={{ padding: 0, overflow: 'hidden', textAlign: 'left', cursor: 'pointer' }}
-              onClick={() => handleProjectClick(p)}
-            >
-              <div style={{ height: '160px', backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Award size={48} style={{ color: 'var(--text-muted)' }} />
-              </div>
-              <div style={{ padding: '20px' }}>
-                <h3 style={{ fontSize: '1.15rem', marginBottom: '8px' }}>{p.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {p.description}
-                </p>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '12px' }}>
-                  {JSON.parse(p.tech_stack || '[]').slice(0, 3).map(tech => (
-                    <span key={tech} className="badge">{tech}</span>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* --- EXPERIENCE & EDUCATION TIMELINES --- */}
-      <section className="grid grid-cols-2" style={{ gap: '32px', marginBottom: '40px', textAlign: 'left' }}>
-        
-        {/* Experience Timeline */}
-        <div className="card">
-          <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Calendar size={18} style={{ color: profile.accent_color }} /> Professional Experience
-          </h3>
-          <div className="flex flex-col gap-6" style={{ borderLeft: '2px solid var(--border-color)', paddingLeft: '16px' }}>
-            {experience.map(e => (
-              <div key={e.id} style={{ position: 'relative' }}>
-                {/* Timeline node */}
-                <div style={{ position: 'absolute', left: '-25px', top: '5px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: profile.accent_color }} />
-                
-                <h4 style={{ fontSize: '1.1rem' }}>{e.role}</h4>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '2px 0 6px' }}>
-                  <strong>{e.company}</strong> | {e.start_date} - {e.is_current === 1 ? 'Present' : e.end_date}
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{e.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Education Timeline */}
-        <div className="card">
-          <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Award size={18} style={{ color: profile.accent_color }} /> Academic & Certifications
-          </h3>
-          
-          <div className="flex flex-col gap-4">
-            {education.map(edu => (
-              <div key={edu.id} style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-                <h4 style={{ fontSize: '1.05rem' }}>{edu.degree} in {edu.field_of_study}</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {edu.institution} | {edu.start_date} - {edu.end_date}
-                </p>
-              </div>
-            ))}
-
-            {certificates.map(cert => (
-              <div key={cert.id} className="flex justify-between items-center" style={{ paddingTop: '8px' }}>
-                <div>
-                  <h4 style={{ fontSize: '0.95rem' }}>{cert.title}</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Issuer: {cert.issuer} ({cert.issue_date})</p>
-                </div>
-                {cert.credential_url && (
-                  <a href={cert.credential_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
-                    Verify
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- RECOMMENDATIONS CAROUSEL/LIST --- */}
-      <section style={{ marginBottom: '40px', textAlign: 'left' }}>
-        <h2 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ThumbsUp style={{ color: profile.accent_color }} /> Peer Endorsements & Recommendations
-        </h2>
-        
-        {recommendations.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>No recommendations published yet.</p>
-        ) : (
-          <div className="grid grid-cols-2">
-            {recommendations.map(r => (
-              <div key={r.id} className="card" style={{ borderLeft: `3px solid ${profile.accent_color}` }}>
-                <p style={{ fontStyle: 'italic', fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                  "{r.content}"
-                </p>
-                <strong>{r.giver_name}</strong>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{r.giver_title}</p>
-              </div>
-            ))}
           </div>
         )}
       </section>
+
+      {/* --- BEHANCE STYLE PROJECT DIRECTORY --- */}
+      {projects.length > 0 && (
+        <section style={{ marginBottom: '56px' }}>
+          <h2 style={{ textAlign: 'left', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.75rem', fontWeight: 800 }}>
+            <Briefcase style={{ color: 'var(--text-secondary)' }} /> Projects Showcase
+          </h2>
+          
+          <div className="grid grid-cols-3" style={{ gap: '28px' }}>
+            {projects.map((p, index) => (
+              <div 
+                key={p.id} 
+                className={`card card-hover flex flex-col justify-between animate-fade-in-up animate-stagger-${(index % 4) + 1}`} 
+                style={{ padding: 0, overflow: 'hidden', textAlign: 'left', cursor: 'pointer', background: 'var(--bg-secondary)' }}
+                onClick={() => handleProjectClick(p)}
+              >
+                <div style={{ height: '180px', backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-color)' }}>
+                  <Award size={48} style={{ color: 'rgba(255,255,255,0.1)' }} />
+                </div>
+                <div style={{ padding: '24px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>{p.title}</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.6 }}>
+                    {p.description}
+                  </p>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    {safeParseTechStack(p.tech_stack).slice(0, 3).map(tech => (
+                      <span key={tech} className="badge" style={{ fontSize: '0.75rem' }}>{tech}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- EXPERIENCE & EDUCATION TIMELINES --- */}
+      {(experience.length > 0 || education.length > 0 || certificates.length > 0) && (
+        <section className="grid" style={{ gridTemplateColumns: (experience.length > 0 && (education.length > 0 || certificates.length > 0)) ? '1fr 1fr' : '1fr', gap: '32px', marginBottom: '56px', textAlign: 'left' }}>
+          
+          {/* Experience Timeline */}
+          {experience.length > 0 && (
+            <div className="card" style={{ padding: '36px' }}>
+              <h3 style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 800 }}>
+                <Calendar size={20} style={{ color: 'var(--text-secondary)' }} /> Professional Experience
+              </h3>
+              <div className="flex flex-col gap-6" style={{ borderLeft: '2px solid var(--border-color)', paddingLeft: '20px', marginLeft: '10px' }}>
+                {experience.map((e, index) => (
+                  <div key={e.id} className={`animate-fade-in-up animate-stagger-${(index % 4) + 1}`} style={{ position: 'relative' }}>
+                    {/* Timeline node */}
+                    <div style={{ position: 'absolute', left: '-31px', top: '6px', width: '12px', height: '12px', borderRadius: '50%', background: 'var(--primary-gradient)', boxShadow: '0 0 10px rgba(255,255,255,0.3)' }} />
+                    
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{e.role}</h4>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '4px 0 8px', fontWeight: 500 }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{e.company}</strong> | {e.start_date} - {e.is_current === 1 ? 'Present' : e.end_date}
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>{e.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Education Timeline */}
+          {(education.length > 0 || certificates.length > 0) && (
+            <div className="card" style={{ padding: '36px' }}>
+              <h3 style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 800 }}>
+                <Award size={20} style={{ color: 'var(--text-secondary)' }} /> Academic & Certifications
+              </h3>
+              
+              <div className="flex flex-col gap-4">
+                {education.map((edu, index) => (
+                  <div key={edu.id} className={`animate-fade-in-up animate-stagger-${(index % 4) + 1}`} style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{edu.degree} in {edu.field_of_study}</h4>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      {edu.institution} | {edu.start_date} - {edu.end_date}
+                    </p>
+                  </div>
+                ))}
+
+                {certificates.map((cert, index) => (
+                  <div key={cert.id} className={`flex justify-between items-center animate-fade-in-up animate-stagger-${(index % 4) + 1}`} style={{ paddingTop: '12px', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '12px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{cert.title}</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>Issuer: {cert.issuer} ({cert.issue_date})</p>
+                    </div>
+                    {cert.credential_url && (
+                      <a href={cert.credential_url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem', padding: '6px 12px', borderRadius: 'var(--radius-sm)' }}>
+                        Verify
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* --- RECOMMENDATIONS CAROUSEL/LIST --- */}
+      {recommendations.length > 0 && (
+        <section style={{ marginBottom: '56px', textAlign: 'left' }}>
+          <h2 style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.75rem', fontWeight: 800 }}>
+            <ThumbsUp style={{ color: 'var(--text-secondary)' }} /> Peer Endorsements
+          </h2>
+          
+          <div className="grid grid-cols-2" style={{ gap: '28px' }}>
+            {recommendations.map(r => (
+              <div key={r.id} className="card" style={{ borderLeft: '4px solid var(--border-hover)', background: 'var(--bg-secondary)', padding: '28px' }}>
+                <p style={{ fontStyle: 'italic', fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                  "{r.content}"
+                </p>
+                <strong style={{ color: 'var(--text-primary)' }}>{r.giver_name}</strong>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>{r.giver_title}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* --- VISITORS CONTACT & PEER RECOMMENDATION FORMS --- */}
       <section className="grid grid-cols-2" style={{ gap: '32px', marginBottom: '8px', textAlign: 'left' }}>
         
         {/* Contact Form */}
         {settings.show_email_form !== 0 && (
-          <div className="card">
-            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageSquare size={18} style={{ color: profile.accent_color }} /> Contact Developer
+          <div className="card" style={{ padding: '36px' }}>
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 800 }}>
+              <MessageSquare size={20} style={{ color: 'var(--text-secondary)' }} /> Contact Developer
             </h3>
             
             {msgFeedback.text && (
-              <div style={{ 
-                backgroundColor: msgFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                color: msgFeedback.type === 'success' ? 'var(--success)' : 'var(--danger)',
-                padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '16px'
-              }}>
+              <div className="alert alert-success" style={{ marginBottom: '20px' }}>
                 {msgFeedback.text}
               </div>
             )}
@@ -431,61 +476,61 @@ export default function PublicPortfolio() {
               <div className="form-group">
                 <textarea 
                   placeholder="Your Message content..." 
-                  rows={3} 
+                  rows={4} 
                   value={msgForm.content}
                   onChange={(e) => setMsgForm({ ...msgForm, content: e.target.value })}
                   required 
                 />
               </div>
-              <button type="submit" className="btn btn-primary w-full">
-                Send Message <Send size={14} />
+              <button type="submit" className="btn btn-primary w-full" style={{ height: '48px', fontSize: '1rem', marginTop: '8px' }}>
+                Send Message <Send size={15} />
               </button>
             </form>
           </div>
         )}
 
         {/* Peer Recommendation Input (If Authenticated User) */}
-        <div className="card">
-          <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ThumbsUp size={18} style={{ color: profile.accent_color }} /> Submit Recommendation
+        <div className="card" style={{ padding: '36px' }}>
+          <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 800 }}>
+            <ThumbsUp size={20} style={{ color: 'var(--text-secondary)' }} /> Submit Recommendation
           </h3>
           {user ? (
             user.username !== username ? (
               settings.allow_recommendations !== 0 ? (
                 <form onSubmit={handleRecSubmit}>
                   {recFeedback && (
-                    <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--success)', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '16px' }}>
+                    <div className="alert alert-success" style={{ marginBottom: '20px' }}>
                       {recFeedback}
                     </div>
                   )}
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: 1.6 }}>
                     As a verified platform developer, you can write an endorsement detailing your peer collaboration experience.
                   </p>
                   <div className="form-group">
                     <textarea 
                       placeholder="Write an endorsement (e.g. Abhilash is a fantastic developer, highly detailed...)" 
-                      rows={4}
+                      rows={5}
                       value={recContent}
                       onChange={(e) => setRecContent(e.target.value)}
                       required
                     />
                   </div>
-                  <button type="submit" className="btn btn-secondary w-full" disabled={submittingRec}>
+                  <button type="submit" className="btn btn-secondary w-full" style={{ height: '48px', fontSize: '1rem' }} disabled={submittingRec}>
                     {submittingRec ? 'Submitting...' : 'Request Verification & Post'}
                   </button>
                 </form>
               ) : (
-                <p style={{ color: 'var(--text-muted)' }}>This developer is currently not accepting recommendations.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>This developer is currently not accepting recommendations.</p>
               )
             ) : (
-              <p style={{ color: 'var(--text-muted)' }}>You cannot submit recommendations on your own showcase.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>You cannot submit recommendations on your own showcase.</p>
             )
           ) : (
-            <div style={{ padding: '20px 0', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            <div style={{ padding: '32px 0', textAlign: 'center' }}>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.95rem', lineHeight: 1.6 }}>
                 Only registered developers on this platform can submit endorsements.
               </p>
-              <Link to="/login" className="btn btn-secondary btn-sm">
+              <Link to="/login" className="btn btn-secondary btn-sm" style={{ padding: '10px 24px' }}>
                 Sign In to Endorse
               </Link>
             </div>
@@ -495,48 +540,46 @@ export default function PublicPortfolio() {
 
       {/* --- DETAIL PROJECT SHOWCASE MODAL --- */}
       {activeProject && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
-          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', 
-          justifyContent: 'center', zIndex: 100, padding: '24px'
-        }} onClick={() => setActiveProject(null)}>
+        <div className="modal-overlay" onClick={() => setActiveProject(null)}>
           <div 
-            className="card animate-fade-in" 
+            className="modal-content animate-fade-in" 
             style={{ 
-              maxWidth: '800px', width: '100%', maxHeight: '90vh', 
-              overflowY: 'auto', textAlign: 'left', backgroundColor: 'var(--bg-secondary)' 
+              maxWidth: '820px', 
+              width: '100%', 
+              backgroundColor: 'var(--bg-secondary)',
+              padding: '36px'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
-              <h2 style={{ fontSize: '1.6rem' }}>{activeProject.title}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{activeProject.title}</h2>
               <button className="btn btn-secondary btn-sm" onClick={() => setActiveProject(null)}>Close</button>
             </div>
 
-            <div style={{ height: '300px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-              <Briefcase size={64} style={{ color: 'var(--text-muted)' }} />
+            <div style={{ height: '320px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '28px', border: '1px solid var(--border-color)' }}>
+              <Briefcase size={64} style={{ color: 'rgba(255,255,255,0.06)' }} />
             </div>
 
-            <h4 style={{ marginBottom: '8px' }}>Project Overview</h4>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            <h4 style={{ marginBottom: '10px', fontSize: '1.1rem', fontWeight: 700 }}>Project Overview</h4>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.7, fontSize: '0.95rem' }}>
               {activeProject.long_description || activeProject.description}
             </p>
 
-            <h4 style={{ marginBottom: '8px' }}>Technologies Employed</h4>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
-              {JSON.parse(activeProject.tech_stack || '[]').map(t => (
-                <span key={t} className="badge badge-primary">{t}</span>
+            <h4 style={{ marginBottom: '10px', fontSize: '1.1rem', fontWeight: 700 }}>Technologies Employed</h4>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px' }}>
+              {safeParseTechStack(activeProject.tech_stack).map(t => (
+                <span key={t} className="badge badge-primary" style={{ fontSize: '0.8rem' }}>{t}</span>
               ))}
             </div>
 
-            <div className="flex gap-2" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+            <div className="flex gap-3" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
               {activeProject.live_url && (
-                <a href={activeProject.live_url} target="_blank" rel="noreferrer" className="btn btn-primary">
+                <a href={activeProject.live_url} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ height: '44px', borderRadius: 'var(--radius-sm)' }}>
                   Launch Live Prototype
                 </a>
               )}
               {activeProject.github_url && (
-                <a href={activeProject.github_url} target="_blank" rel="noreferrer" className="btn btn-secondary">
+                <a href={activeProject.github_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ height: '44px', borderRadius: 'var(--radius-sm)' }}>
                   Inspect GitHub Repository
                 </a>
               )}

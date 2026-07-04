@@ -51,6 +51,7 @@ async function initDb() {
   for (const statement of statements) {
     await dbRun(statement);
   }
+
 }
 
 module.exports = {

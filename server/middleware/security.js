@@ -4,7 +4,7 @@ const { dbRun } = require('../config/db');
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 100, // Limit each IP to 100 requests per window
+  max: process.env.NODE_ENV === 'production' ? 100 : 10000, // relaxed threshold during development
   message: { error: 'Too many requests from this IP. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -13,7 +13,7 @@ const apiLimiter = rateLimit({
 // Rate limiter for registration & reset endpoints to prevent spamming
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 5, // start blocking after 5 requests
+  max: process.env.NODE_ENV === 'production' ? 5 : 1000,
   message: { error: 'Too many accounts created from this IP. Please try again in an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -21,7 +21,7 @@ const registerLimiter = rateLimit({
 
 const passwordResetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 3,
+  max: process.env.NODE_ENV === 'production' ? 3 : 1000,
   message: { error: 'Too many password reset requests. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,

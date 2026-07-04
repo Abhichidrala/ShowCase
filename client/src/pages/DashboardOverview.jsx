@@ -1,4 +1,23 @@
 import React, { useEffect, useState } from 'react';
+
+// Safe JSON parse for tech_stack
+function safeParseTechStack(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return typeof value === 'string' ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
+}
+
+function resolveImageUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  // Relative paths served through Vite proxy to backend /uploads
+  return url;
+}
 import { useAuth } from '../context/AuthContext';
 import apiService from '../services/api';
 import { 
@@ -18,6 +37,7 @@ export default function DashboardOverview() {
   const [profile, setProfile] = useState({});
   const [settings, setSettings] = useState({});
   const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(null);
   const [themesList, setThemesList] = useState([]);
 
   // Tab 2: Projects CRUD state
@@ -88,6 +108,14 @@ export default function DashboardOverview() {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
+
   const showMsg = (text, type = 'success') => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: '', type: '' }), 5000);
@@ -111,6 +139,12 @@ export default function DashboardOverview() {
       await apiService.dashboard.updateSettings(settings);
       showMsg('Profile customizations saved successfully.');
       fetchDashboardData();
+      
+      setAvatarFile(null);
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+        setAvatarPreviewUrl(null);
+      }
     } catch (err) {
       showMsg(err.response?.data?.error || 'Failed to save profile changes.', 'danger');
     }
@@ -332,148 +366,109 @@ export default function DashboardOverview() {
   }
 
   return (
-    <div className="container animate-fade-in" style={{ padding: '40px 0' }}>
+    <div className="container animate-fade-in" style={{ padding: '60px 0' }}>
       
       {/* --- DASHBOARD HEADER --- */}
-      <header className="flex justify-between items-center" style={{ marginBottom: '32px' }}>
+      <header className="flex justify-between items-center" style={{ marginBottom: '40px', borderBottom: '1px solid var(--border-color)', paddingBottom: '24px' }}>
         <div>
-          <h2>Career Showcase Portal</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, @{user?.username} ({user?.role === 'super_admin' ? 'Platform Administrator' : 'Developer Account'})</p>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '6px' }}>Career Showcase Portal</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Welcome back, <strong style={{ color: 'var(--text-primary)' }}>@{user?.username}</strong> — {user?.role === 'super_admin' ? 'Platform Admin' : 'Developer Account'}</p>
         </div>
-        <div className="flex gap-2">
-          <a href={`/${user?.username}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-            <Eye size={14} /> Preview Portfolio
+        <div className="flex gap-3">
+          <a href={`/${user?.username}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ borderRadius: 'var(--radius-sm)' }}>
+            <Eye size={15} /> Preview Portfolio
           </a>
-          <button onClick={logout} className="btn btn-danger btn-sm">
-            <LogOut size={14} /> Logout
+          <button onClick={logout} className="btn btn-danger btn-sm" style={{ borderRadius: 'var(--radius-sm)' }}>
+            <LogOut size={15} /> Logout
           </button>
         </div>
       </header>
 
       {/* --- MESSAGE BANNER --- */}
       {msg.text && (
-        <div style={{
-          backgroundColor: msg.type === 'danger' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-          color: msg.type === 'danger' ? 'var(--danger)' : 'var(--success)',
-          padding: '12px 16px',
-          borderRadius: 'var(--radius-sm)',
-          border: `1px solid ${msg.type === 'danger' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
-          marginBottom: '24px'
-        }}>
+        <div className="alert alert-success" style={{ marginBottom: '32px' }}>
           {msg.text}
         </div>
       )}
 
       {/* --- CORE DASHBOARD SECTION --- */}
-      <div className="grid" style={{ gridTemplateColumns: '240px 1fr' }}>
+      <div className="grid" style={{ gridTemplateColumns: '260px 1fr', gap: '32px' }}>
         
         {/* --- SIDEBAR MENU TABS --- */}
-        <aside className="card flex flex-col gap-2" style={{ padding: '16px' }}>
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'overview' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <span>Overview</span>
-            <BarChart2 size={16} />
-          </button>
-          
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'profile' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <span>Profile & Themes</span>
-            <User size={16} />
-          </button>
-
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'projects' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('projects')}
-          >
-            <span>Projects CRUD</span>
-            <Briefcase size={16} />
-          </button>
-
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'skills' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('skills')}
-          >
-            <span>Skills Setup</span>
-            <Award size={16} />
-          </button>
-
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'messages' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('messages')}
-          >
-            <span>Inbox Messages</span>
-            <MessageSquare size={16} />
-          </button>
-
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'recommendations' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('recommendations')}
-          >
-            <span>Recommendations</span>
-            <ThumbsUp size={16} />
-          </button>
-
-          <button 
-            className={`btn w-full justify-between btn-${activeTab === 'security' ? 'primary' : 'secondary'}`}
-            onClick={() => setActiveTab('security')}
-          >
-            <span>Security (2FA)</span>
-            <Shield size={16} />
-          </button>
+        <aside className="glass-panel flex flex-col gap-3" style={{ padding: '20px', height: 'fit-content' }}>
+          {[
+            { id: 'overview', label: 'Overview', icon: <BarChart2 size={18} /> },
+            { id: 'profile', label: 'Profile & Themes', icon: <User size={18} /> },
+            { id: 'projects', label: 'Projects CRUD', icon: <Briefcase size={18} /> },
+            { id: 'skills', label: 'Skills Setup', icon: <Award size={18} /> },
+            { id: 'messages', label: 'Inbox Messages', icon: <MessageSquare size={18} /> },
+            { id: 'recommendations', label: 'Recommendations', icon: <ThumbsUp size={18} /> },
+            { id: 'security', label: 'Security (2FA)', icon: <Shield size={18} /> },
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              className={`btn w-full justify-between`}
+              style={{
+                background: activeTab === tab.id ? 'var(--primary-gradient)' : 'transparent',
+                borderColor: activeTab === tab.id ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                color: activeTab === tab.id ? 'var(--btn-primary-text)' : 'var(--text-secondary)',
+                padding: '12px 18px',
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: activeTab === tab.id ? '0 4px 12px rgba(255, 255, 255, 0.08)' : 'none'
+              }}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>{tab.label}</span>
+              {tab.icon}
+            </button>
+          ))}
         </aside>
 
         {/* --- MAIN TAB CONTENT --- */}
-        <main className="card" style={{ padding: '32px' }}>
+        <main className="glass-panel" style={{ padding: '36px' }}>
           
           {/* TAB 1: OVERVIEW SUMMARY */}
           {activeTab === 'overview' && (
             <div>
-              <h3 style={{ marginBottom: '24px' }}>Performance Overview</h3>
+              <h3 style={{ marginBottom: '28px', fontSize: '1.4rem', fontWeight: 800 }}>Performance Overview</h3>
               
               {/* Metrics Grid */}
-              <div className="grid grid-cols-4" style={{ marginBottom: '32px' }}>
-                <div className="card text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{stats?.pageViews}</div>
-                  <label>Total Views</label>
-                </div>
-                <div className="card text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{stats?.followers}</div>
-                  <label>Followers</label>
-                </div>
-                <div className="card text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{stats?.projects}</div>
-                  <label>Projects</label>
-                </div>
-                <div className="card text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{stats?.messages}</div>
-                  <label>Unread Emails</label>
-                </div>
+              <div className="grid grid-cols-4" style={{ marginBottom: '36px', gap: '20px' }}>
+                {[
+                  { label: 'Total Views', value: stats?.pageViews, color: 'var(--text-primary)' },
+                  { label: 'Followers', value: stats?.followers, color: 'var(--text-primary)' },
+                  { label: 'Projects', value: stats?.projects, color: 'var(--text-primary)' },
+                  { label: 'Unread Emails', value: stats?.messages, color: 'var(--text-primary)' }
+                ].map(metric => (
+                  <div key={metric.label} className="card text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: 'rgba(255,255,255,0.02)', padding: '20px' }}>
+                    <div style={{ fontSize: '2.2rem', fontWeight: 800, color: metric.color, letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                      {metric.value}
+                    </div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{metric.label}</label>
+                  </div>
+                ))}
               </div>
 
               {/* Analytics graph mock */}
-              <div className="card" style={{ backgroundColor: 'var(--bg-tertiary)', padding: '32px' }}>
-                <div className="flex justify-between items-center" style={{ marginBottom: '16px' }}>
-                  <h4>Interactive Analytics Telemetry</h4>
-                  <span className="badge badge-success">Live Tracking Active</span>
+              <div className="card" style={{ backgroundColor: 'rgba(255, 255, 255, 0.01)', padding: '32px' }}>
+                <div className="flex justify-between items-center" style={{ marginBottom: '20px' }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Interactive Analytics Telemetry</h4>
+                  <span className="badge badge-success" style={{ fontSize: '0.75rem' }}>Live Tracking Active</span>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '28px' }}>
                   Our analytics track visitors visits, project link clicks, and download requests under strict hashed session privacy parameters. Keep building elements to grow your reach!
                 </p>
-                <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginTop: '24px' }}>
+                <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '10px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginTop: '24px' }}>
                   {/* Mock bar chart graph */}
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '40%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '60%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '55%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '80%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '70%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '90%', borderRadius: '3px 3px 0 0' }}></div>
-                  <div style={{ flex: 1, backgroundColor: 'var(--accent-color)', height: '95%', borderRadius: '3px 3px 0 0' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #ffffff, #888888)', height: '40%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #ffffff, #888888)', height: '60%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #ffffff, #888888)', height: '55%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #dddddd, #555555)', height: '80%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #dddddd, #555555)', height: '70%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #aaaaaa, #222222)', height: '90%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
+                  <div style={{ flex: 1, background: 'linear-gradient(to top, #aaaaaa, #222222)', height: '95%', borderRadius: '4px 4px 0 0', boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)' }}></div>
                 </div>
-                <div className="flex justify-between" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                <div className="flex justify-between" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '12px', fontWeight: 500 }}>
                   <span>Mon</span>
                   <span>Tue</span>
                   <span>Wed</span>
@@ -491,6 +486,38 @@ export default function DashboardOverview() {
             <form onSubmit={handleProfileSave}>
               <h3 style={{ marginBottom: '24px' }}>Customize Profile & Theme Style</h3>
               
+              <div className="form-group" style={{ marginBottom: '28px' }}>
+                <label>Profile Avatar Picture</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  <img 
+                    src={avatarPreviewUrl || resolveImageUrl(profile.avatar_url) || `https://api.dicebear.com/9.x/adventurer/svg?seed=${user?.username}&skinColor=f8d9b2`} 
+                    alt="Avatar Preview" 
+                    className="avatar"
+                    style={{ width: '56px', height: '56px' }}
+                  />
+                  <div style={{ flex: 1, minWidth: '200px' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const file = e.target.files[0];
+                          setAvatarFile(file);
+                          if (avatarPreviewUrl) {
+                            URL.revokeObjectURL(avatarPreviewUrl);
+                          }
+                          setAvatarPreviewUrl(URL.createObjectURL(file));
+                        }
+                      }}
+                      style={{ padding: '8px 12px', fontSize: '0.9rem' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                      PNG, JPG, or SVG. Staged changes preview instantly. Click "Save Customizations" to submit.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2">
                 <div className="form-group">
                   <label>Portfolio Site Name</label>
@@ -539,7 +566,7 @@ export default function DashboardOverview() {
 
               <div className="grid grid-cols-2">
                 <div className="form-group">
-                  <label>Custom Profile Accent Color</label>
+                  <label>Profile Accent Color</label>
                   <input 
                     type="color" 
                     value={profile.accent_color || '#3b82f6'} 
@@ -703,7 +730,7 @@ export default function DashboardOverview() {
                         <td>{p.featured === 1 ? <span className="badge badge-primary">Featured</span> : 'No'}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            {JSON.parse(p.tech_stack || '[]').slice(0, 2).map(t => (
+                            {safeParseTechStack(p.tech_stack).slice(0, 2).map(t => (
                               <span key={t} className="badge">{t}</span>
                             ))}
                           </div>
@@ -799,7 +826,7 @@ export default function DashboardOverview() {
                   <div key={m.id} className="card" style={{ 
                     textAlign: 'left', 
                     borderLeft: `3px solid ${m.is_read === 0 ? 'var(--accent-color)' : 'var(--border-color)'}`,
-                    backgroundColor: m.is_read === 0 ? 'rgba(129, 140, 248, 0.02)' : undefined
+                    backgroundColor: m.is_read === 0 ? 'rgba(255, 255, 255, 0.03)' : undefined
                   }}>
                     <div className="flex justify-between items-center" style={{ marginBottom: '8px' }}>
                       <strong>{m.sender_name} ({m.sender_email})</strong>

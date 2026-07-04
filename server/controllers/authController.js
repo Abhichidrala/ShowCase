@@ -32,12 +32,11 @@ const AuthController = {
         return res.status(400).json({ error: 'Username or email already taken.' });
       }
 
-      const verificationToken = crypto.randomBytes(32).toString('hex');
       const passwordHash = bcrypt.hashSync(password, 12);
 
       const userResult = await dbRun(
-        'INSERT INTO users (username, email, password_hash, is_verified, verification_token, gender) VALUES (?, ?, ?, 0, ?, ?)',
-        [usernameLower, emailLower, passwordHash, verificationToken, gender]
+        'INSERT INTO users (username, email, password_hash, is_verified, verification_token, gender) VALUES (?, ?, ?, 1, NULL, ?)',
+        [usernameLower, emailLower, passwordHash, gender]
       );
       
       const userId = userResult.id;
@@ -69,25 +68,10 @@ const AuthController = {
         [userId, `${usernameLower} | Developer Portfolio`, `Explore projects and blogs by ${usernameLower}.`]
       );
 
-      // Send verification email
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      const verifyLink = `${clientUrl}/verify-email?token=${verificationToken}`;
-
-      try {
-        await EmailService.sendVerificationEmail(emailLower, usernameLower, verifyLink);
-        console.log(`✉️  Verification email sent to ${emailLower}`);
-      } catch (emailErr) {
-        console.error('⚠️  Failed to send verification email:', emailErr.message);
-        // Clean up created user to avoid locked username/email on failure
-        await dbRun('DELETE FROM users WHERE id = ?', [userId]);
-        return res.status(500).json({ error: 'Failed to send verification email. Registration aborted.' });
-      }
-
       await logAuditEvent(userId, 'REGISTER_SUCCESS', { username: usernameLower }, req.ip);
 
       res.status(201).json({ 
-        message: 'Registration successful! Please check your email to verify your account.',
-        verifyLink // retained for testing convenience
+        message: 'Registration successful! You can now log in.'
       });
     } catch (err) {
       next(err);
